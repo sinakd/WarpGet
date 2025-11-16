@@ -12,10 +12,11 @@
 
 
 import tkinter as tk
+import threading
 from tkinter import ttk
 import os
 
-# version 0.1.0
+# version 0.1.1
 
 class WarpGetMainFrame(ttk.Frame):
     def __init__(self, master):
@@ -33,9 +34,19 @@ class WarpGetMainFrame(ttk.Frame):
     def start_download(self):
         self.status.config(text="Downloading...")
         url = self.url_entry.get()
-        os.system(f"wget \"{url}\"")
+        dl_thread = threading.Thread(target=self.run_wget, args=(url,), daemon=True)
+        dl_thread.start()
 
-        self.status.config(text="Download Complete!")
+        self.check_thread(dl_thread)
+
+    def run_wget(self, url):
+        os.system(f'wget "{url}"')
+
+    def check_thread(self, thread):
+        if thread.is_alive():
+            self.after(100, lambda: self.check_thread(thread))
+        else:
+            self.status.config(text="Download Complete!")
 
 class WarpGet(tk.Tk):
     def __init__(self):
