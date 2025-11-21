@@ -12,11 +12,11 @@
 
 
 import tkinter as tk
-import threading
+import re
 from tkinter import ttk
-import os
+import subprocess
 
-# version 0.1.1
+# version 0.2.0
 
 class WarpGetMainFrame(ttk.Frame):
     def __init__(self, master):
@@ -34,17 +34,34 @@ class WarpGetMainFrame(ttk.Frame):
     def start_download(self):
         self.status.config(text="Downloading...")
         url = self.url_entry.get()
-        dl_thread = threading.Thread(target=self.run_wget, args=(url,), daemon=True)
-        dl_thread.start()
 
-        self.check_thread(dl_thread)
+        process = subprocess.Popen(
+            ["wget", "--progress=dot", url],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            text=True
+            )
 
-    def run_wget(self, url):
-        os.system(f'wget "{url}"')
+        self.check_progress(process)
 
-    def check_thread(self, thread):
-        if thread.is_alive():
-            self.after(100, lambda: self.check_thread(thread))
+    def check_progress(self, process):
+        line = process.stdout.readline()
+
+        if line:
+            line = line.strip()
+
+            m = re.search(r"(\d+)%", line)
+            if m:
+                percent = m.group(1)
+                self.status.config(text=f"Downloading... {percent}%")
+            else:
+                if "." in line:
+                    dots = line.count(".")
+                    self.status.config(text=f"Downloading... ({dots} dots)")
+        
+        if process.poll() is None:
+            self.after(100, lambda: self.check_progress(process))
         else:
             self.status.config(text="Download Complete!")
 
