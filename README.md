@@ -1,4 +1,4 @@
 # WarpGet
 A Graphical User Interface for 'wget' Command
 
-v0.1.1 (Alpha)
+v0.2.0 (Alpha)
